@@ -49,7 +49,7 @@ fastuidraw_gl_frag_main(in uint sub_shader,
     {
       if (render_pass == uint(fastuidraw_stroke_aa_pass2))
         {
-          return vec4(0.0, 0.0, float(fastuidraw_clear_auxilary()) / 255.0, 1.0);
+          return vec4(1.0, 1.0, 1.0, float(fastuidraw_clear_auxilary()) / 255.0);
         }
     }
   #endif
@@ -158,6 +158,7 @@ fastuidraw_gl_frag_main(in uint sub_shader,
           dd = max(q, fwidth(q));
           alpha *= q / dd;
           fastuidraw_max_auxilary(uint(255.0 * alpha));
+          alpha = 0.0;
         }
     }
   #else
@@ -170,7 +171,6 @@ fastuidraw_gl_frag_main(in uint sub_shader,
           q = 1.0 - fastuidraw_stroking_on_boundary;
           dd = max(q, fwidth(q));
           alpha *= q / dd;
-          alpha = 0.0;
         }
       else
         {

@@ -217,13 +217,14 @@ ShaderSetCreator(enum PainterBlendShader::shader_type blend_tp,
                  const reference_counted_ptr<const PainterDraw::Action> &stroke_action_pass1,
                  const reference_counted_ptr<const PainterDraw::Action> &stroke_action_pass2):
   BlendShaderSetCreator(blend_tp),
+  m_stroke_tp(stroke_tp),
   m_stroke_action_pass1(stroke_action_pass1),
   m_stroke_action_pass2(stroke_action_pass2)
 {
   unsigned int num_undashed_sub_shaders, num_dashed_sub_shaders;
   c_string extra_macro;
 
-  if(stroke_tp == PainterStrokeShader::draws_solid_then_fuzz)
+  if(m_stroke_tp == PainterStrokeShader::draws_solid_then_fuzz)
     {
       extra_macro = "FASTUIDRAW_STROKE_SOLID_THEN_FUZZ";
     }
@@ -385,6 +386,7 @@ create_stroke_shader(enum PainterEnums::cap_style stroke_style,
   PainterStrokeShader return_value;
 
   return_value
+    .aa_type(m_stroke_tp)
     .stroking_data_selector(stroke_data_selector)
     .aa_action_pass1(m_stroke_action_pass1)
     .aa_shader_pass1(create_stroke_item_shader(stroke_style, pixel_width_stroking, uber_stroke_aa_pass1))

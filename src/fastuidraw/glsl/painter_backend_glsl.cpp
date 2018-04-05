@@ -1246,16 +1246,21 @@ fastuidraw::glsl::PainterBackendGLSL::BindingPoints::
 
 fastuidraw::glsl::PainterBackendGLSL::BindingPoints&
 fastuidraw::glsl::PainterBackendGLSL::BindingPoints::
-operator=(const BindingPoints &rhs)
+operator=(const BindingPoints &obj)
 {
-  if(this != &rhs)
+  if(this != &obj)
     {
-      BindingPointsPrivate *d, *rhs_d;
-      d = static_cast<BindingPointsPrivate*>(m_d);
-      rhs_d = static_cast<BindingPointsPrivate*>(rhs.m_d);
-      *d = *rhs_d;
+      BindingPoints v(obj);
+      swap(v);
     }
   return *this;
+}
+
+void
+fastuidraw::glsl::PainterBackendGLSL::BindingPoints::
+swap(BindingPoints &rhs)
+{
+  std::swap(m_d, rhs.m_d);
 }
 
 #define setget_implement(type, name)                                    \
@@ -1323,12 +1328,17 @@ operator=(const UberShaderParams &rhs)
 {
   if(this != &rhs)
     {
-      UberShaderParamsPrivate *d, *rhs_d;
-      d = static_cast<UberShaderParamsPrivate*>(m_d);
-      rhs_d = static_cast<UberShaderParamsPrivate*>(rhs.m_d);
-      *d = *rhs_d;
+      UberShaderParams v(rhs);
+      swap(v);
     }
   return *this;
+}
+
+void
+fastuidraw::glsl::PainterBackendGLSL::UberShaderParams::
+swap(UberShaderParams &obj)
+{
+  std::swap(m_d, obj.m_d);
 }
 
 #define setget_implement(type, name)                                    \
@@ -1337,7 +1347,7 @@ operator=(const UberShaderParams &rhs)
   name(type v)                                                          \
   {                                                                     \
     UberShaderParamsPrivate *d;                                         \
-    d = static_cast<UberShaderParamsPrivate*>(m_d);                \
+    d = static_cast<UberShaderParamsPrivate*>(m_d);                     \
     d->m_##name = v;                                                    \
     return *this;                                                       \
   }                                                                     \
@@ -1347,7 +1357,7 @@ operator=(const UberShaderParams &rhs)
   name(void) const                                                      \
   {                                                                     \
     UberShaderParamsPrivate *d;                                         \
-    d = static_cast<UberShaderParamsPrivate*>(m_d);                \
+    d = static_cast<UberShaderParamsPrivate*>(m_d);                     \
     return d->m_##name;                                                 \
   }
 

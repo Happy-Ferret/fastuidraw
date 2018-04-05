@@ -277,6 +277,13 @@ namespace fastuidraw
         operator=(const BindingPoints &rhs);
 
         /*!
+          Swap operation
+          \param obj object with which to swap
+        */
+        void
+        swap(BindingPoints &obj);
+
+        /*!
           Specifies the binding point for ColorStopAtlas::backing_store().
           The data type for the uniform is decided from the value
           of UberShaderParams::colorstop_atlas_backing():
@@ -478,6 +485,13 @@ namespace fastuidraw
          */
         UberShaderParams&
         operator=(const UberShaderParams &rhs);
+
+        /*!
+          Swap operation
+          \param obj object with which to swap
+        */
+        void
+        swap(UberShaderParams &obj);
 
         /*!
           Specifies the normalized device z-coordinate convention

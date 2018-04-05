@@ -111,6 +111,7 @@ private:
   PainterFillShader
   create_fill_shader(void);
 
+  enum PainterStrokeShader::type_t m_stroke_tp;
   reference_counted_ptr<PainterItemShader> m_uber_stroke_shader, m_uber_dashed_stroke_shader;
   reference_counted_ptr<const PainterDraw::Action> m_stroke_action_pass1;
   reference_counted_ptr<const PainterDraw::Action> m_stroke_action_pass2;

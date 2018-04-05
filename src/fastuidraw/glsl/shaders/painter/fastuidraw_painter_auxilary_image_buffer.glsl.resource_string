@@ -8,19 +8,21 @@ uint fastuidraw_clear_auxilary(void)
   uint r;
   ivec2 pos = ivec2(gl_FragCoord.xy);
 
-  FASTUIDRAW_PAINTER_INTERLOCK();
+  fastuidraw_begin_interlock();
   r = imageLoad(fastuidraw_auxilary_buffer, pos).x;
   imageStore(fastuidraw_auxilary_buffer, pos, uvec4(0u, 0u, 0u, 0u));
+  fastuidraw_end_interlock();
   return r;
 }
 
 void fastuidraw_max_auxilary(in uint r)
 {
   ivec2 pos = ivec2(gl_FragCoord.xy);
-  FASTUIDRAW_PAINTER_INTERLOCK();
   r = min(r, 255u);
+  fastuidraw_begin_interlock();
   r = max(imageLoad(fastuidraw_auxilary_buffer, pos).x, r);
   imageStore(fastuidraw_auxilary_buffer, pos, uvec4(r, 0u, 0u, 0u));
+  fastuidraw_end_interlock();
 }
 
 #else
@@ -37,6 +39,7 @@ uint fastuidraw_clear_auxilary(void)
 void fastuidraw_max_auxilary(in uint r)
 {
   ivec2 pos = ivec2(gl_FragCoord.xy);
+  r = min(r, 255u);
   imageAtomicMax(fastuidraw_auxilary_buffer, pos, r);
 }
 

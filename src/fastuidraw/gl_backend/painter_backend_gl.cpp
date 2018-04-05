@@ -49,6 +49,15 @@ namespace
       shader_group_discard_mask = (1u << 31u)
     };
 
+  enum interlock_type_t
+    {
+      intel_fragment_shader_ordering,
+      nv_fragment_shader_interlock,
+      arb_fragment_shader_interlock,
+
+      no_interlock
+    };
+
   class painter_vao
   {
   public:
@@ -162,6 +171,17 @@ namespace
     enum fastuidraw::gl::PainterBackendGL::program_type_t m_tp;
   };
 
+  class ImageBarrier:public fastuidraw::PainterDraw::Action
+  {
+  public:
+    virtual
+    void
+    execute(void) const
+    {
+      glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+    }
+  };
+
   class PainterBackendGLPrivate
   {
   public:
@@ -202,6 +222,7 @@ namespace
     build_vao_tbos(void);
 
     fastuidraw::ivec2 m_target_resolution;
+    enum interlock_type_t m_interlock_type;
     fastuidraw::gl::PainterBackendGL::ConfigurationGL m_params;
     fastuidraw::glsl::PainterBackendGLSL::UberShaderParams m_uber_shader_builder_params;
 
@@ -985,20 +1006,47 @@ compute_glsl_config(const fastuidraw::gl::PainterBackendGL::ConfigurationGL &par
         && (ctx.has_extension("GL_APPLE_clip_distance") || ctx.has_extension("GL_EXT_clip_cull_distance"));
 
       return_value.use_hw_clip_planes(use_hw_clip_planes);
+
+      if (ctx.version() >= ivec2(3, 1))
+        {
+          return_value
+            .default_stroke_shader_aa_type(params.default_stroke_shader_aa_type());
+        }
+      else
+        {
+          return_value
+            .default_stroke_shader_aa_type(fastuidraw::PainterStrokeShader::draws_solid_then_fuzz);
+        }
     }
   #else
     {
       return_value.use_hw_clip_planes(params.use_hw_clip_planes());
+      if (ctx.version() >= ivec2(4, 2)
+          || ctx.has_extension("GL_ARB_shader_image_load_store"))
+        {
+          return_value
+            .default_stroke_shader_aa_type(params.default_stroke_shader_aa_type());
+        }
+      else
+        {
+          return_value
+            .default_stroke_shader_aa_type(fastuidraw::PainterStrokeShader::draws_solid_then_fuzz);
+        }
     }
   #endif
 
-  return_value
-    .default_stroke_shader_aa_type(params.default_stroke_shader_aa_type());
-
-  if (params.default_stroke_shader_aa_type() == fastuidraw::PainterStrokeShader::cover_then_draw)
+  if (return_value.default_stroke_shader_aa_type() == fastuidraw::PainterStrokeShader::cover_then_draw)
     {
-      //default_stroke_shader_aa_pass1_action();
-      //default_stroke_shader_aa_pass2_action();
+      if (!ctx.has_extension("GL_ARB_fragment_shader_interlock")
+          && !ctx.has_extension("GL_INTEL_fragment_shader_ordering")
+          && !ctx.has_extension("GL_NV_fragment_shader_interlock"))
+        {
+          fastuidraw::reference_counted_ptr<const fastuidraw::PainterDraw::Action> q;
+          q = FASTUIDRAWnew ImageBarrier();
+          return_value
+            .default_stroke_shader_aa_pass1_action(q)
+            .default_stroke_shader_aa_pass2_action(q);
+        }
     }
 
   return return_value;
@@ -1165,6 +1213,23 @@ configure_backend(void)
       m_params.default_stroke_shader_aa_type(fastuidraw::PainterStrokeShader::draws_solid_then_fuzz);
     }
 
+  if(m_ctx_properties.has_extension("GL_ARB_fragment_shader_interlock"))
+    {
+      m_interlock_type = arb_fragment_shader_interlock;
+    }
+  else if(m_ctx_properties.has_extension("GL_INTEL_fragment_shader_ordering"))
+    {
+      m_interlock_type = intel_fragment_shader_ordering;
+    }
+  else if(m_ctx_properties.has_extension("GL_NV_fragment_shader_interlock"))
+    {
+      m_interlock_type = nv_fragment_shader_interlock;
+    }
+  else
+    {
+      m_interlock_type = no_interlock;
+    }
+
   m_uber_shader_builder_params
     .assign_layout_to_vertex_shader_inputs(m_params.assign_layout_to_vertex_shader_inputs())
     .assign_layout_to_varyings(m_params.assign_layout_to_varyings())
@@ -1247,7 +1312,33 @@ configure_source_front_matter(void)
 
   if(m_uber_shader_builder_params.provide_auxilary_image_buffer())
     {
-      m_front_matter_frag.add_source("layout(early_fragment_tests) in;\n", ShaderSource::from_string);
+      std::ostringstream interlock;
+      interlock << "layout(early_fragment_tests) in;\n";
+      switch(m_interlock_type)
+        {
+        case no_interlock:
+          break;
+
+        case intel_fragment_shader_ordering:
+          interlock << "void fastuidraw_begin_interlock(void) { beginFragmentShaderOrderingINTEL(); }\n"
+                    << "void fastuidraw_end_interlock(void) {}\n"
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n";
+          break;
+
+        case arb_fragment_shader_interlock:
+          interlock << "void fastuidraw_begin_interlock(void) { beginInvocationInterlockARB(); }\n"
+                    << "void fastuidraw_end_interlock(void) { endInvocationInterlockARB(); }\n"
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n";
+          break;
+
+        case nv_fragment_shader_interlock:
+          interlock << "void fastuidraw_begin_interlock(void) { beginInvocationInterlockNV(); }\n"
+                    << "void fastuidraw_end_interlock(void) { endInvocationInterlockNV(); }\n"
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n";
+          break;
+        }
+
+      m_front_matter_frag.add_source(interlock.str().c_str(), ShaderSource::from_string);
     }
 
   #ifdef FASTUIDRAW_GL_USE_GLES
