@@ -1427,8 +1427,11 @@ configure_source_front_matter(void)
 
           if(m_uber_shader_builder_params.provide_auxilary_image_buffer())
             {
-              m_front_matter_vert.specify_extension("GL_ARB_shader_image_load_store", ShaderSource::require_extension);
-              m_front_matter_frag.specify_extension("GL_ARB_shader_image_load_store", ShaderSource::require_extension);
+              m_front_matter_frag
+                .specify_extension("GL_ARB_shader_image_load_store", ShaderSource::require_extension)
+                .specify_extension("GL_ARB_fragment_shader_interlock", ShaderSource::enable_extension)
+                .specify_extension("GL_INTEL_fragment_shader_ordering", ShaderSource::enable_extension)
+                .specify_extension("GL_NV_fragment_shader_interlock", ShaderSource::enable_extension);
             }
         }
     }
