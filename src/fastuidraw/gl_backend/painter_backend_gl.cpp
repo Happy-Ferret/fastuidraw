@@ -1213,13 +1213,13 @@ configure_backend(void)
       m_params.default_stroke_shader_aa_type(fastuidraw::PainterStrokeShader::draws_solid_then_fuzz);
     }
 
-  if(m_ctx_properties.has_extension("GL_ARB_fragment_shader_interlock"))
-    {
-      m_interlock_type = arb_fragment_shader_interlock;
-    }
-  else if(m_ctx_properties.has_extension("GL_INTEL_fragment_shader_ordering"))
+  if(m_ctx_properties.has_extension("GL_INTEL_fragment_shader_ordering"))
     {
       m_interlock_type = intel_fragment_shader_ordering;
+    }
+  else if(m_ctx_properties.has_extension("GL_ARB_fragment_shader_interlock"))
+    {
+      m_interlock_type = arb_fragment_shader_interlock;
     }
   else if(m_ctx_properties.has_extension("GL_NV_fragment_shader_interlock"))
     {
