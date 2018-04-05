@@ -333,7 +333,7 @@ namespace
       m_assign_binding_points(true),
       m_use_ubo_for_uniforms(false),
       m_separate_program_for_discard(true),
-      m_non_dashed_stroke_shader_uses_discard(false),
+      m_default_stroke_shader_aa_type(fastuidraw::PainterStrokeShader::draws_solid_then_fuzz),
       m_blend_type(fastuidraw::PainterBlendShader::dual_src),
       m_provide_auxilary_image_buffer(false)
     {}
@@ -357,7 +357,7 @@ namespace
     bool m_assign_binding_points;
     bool m_use_ubo_for_uniforms;
     bool m_separate_program_for_discard;
-    bool m_non_dashed_stroke_shader_uses_discard;
+    enum fastuidraw::PainterStrokeShader::type_t m_default_stroke_shader_aa_type;
     enum fastuidraw::PainterBlendShader::shader_type m_blend_type;
     bool m_provide_auxilary_image_buffer;
   };
@@ -993,7 +993,13 @@ compute_glsl_config(const fastuidraw::gl::PainterBackendGL::ConfigurationGL &par
   #endif
 
   return_value
-    .non_dashed_stroke_shader_uses_discard(params.non_dashed_stroke_shader_uses_discard());
+    .default_stroke_shader_aa_type(params.default_stroke_shader_aa_type());
+
+  if (params.default_stroke_shader_aa_type() == fastuidraw::PainterStrokeShader::cover_then_draw)
+    {
+      //default_stroke_shader_aa_pass1_action();
+      //default_stroke_shader_aa_pass2_action();
+    }
 
   return return_value;
 }
@@ -1153,6 +1159,11 @@ configure_backend(void)
         }
     }
   #endif
+
+  if(!m_params.provide_auxilary_image_buffer())
+    {
+      m_params.default_stroke_shader_aa_type(fastuidraw::PainterStrokeShader::draws_solid_then_fuzz);
+    }
 
   m_uber_shader_builder_params
     .assign_layout_to_vertex_shader_inputs(m_params.assign_layout_to_vertex_shader_inputs())
@@ -1356,7 +1367,6 @@ build_programs(void)
       m_programs[tp] = build_program(tp);
       FASTUIDRAWassert(m_programs[tp]->link_success());
       m_shader_uniforms_loc[tp] = m_programs[tp]->uniform_location("fastuidraw_shader_uniforms");
-      FASTUIDRAWassert(m_shader_uniforms_loc[tp] != -1 || m_uber_shader_builder_params.use_ubo_for_uniforms());
     }
 
   if(!m_uber_shader_builder_params.use_ubo_for_uniforms())
@@ -1485,7 +1495,7 @@ setget_implement(bool, assign_layout_to_varyings)
 setget_implement(bool, assign_binding_points)
 setget_implement(bool, use_ubo_for_uniforms)
 setget_implement(bool, separate_program_for_discard)
-setget_implement(bool, non_dashed_stroke_shader_uses_discard)
+setget_implement(enum fastuidraw::PainterStrokeShader::type_t, default_stroke_shader_aa_type)
 setget_implement(enum fastuidraw::PainterBlendShader::shader_type, blend_type)
 setget_implement(bool, provide_auxilary_image_buffer)
 #undef setget_implement
@@ -1743,13 +1753,19 @@ on_pre_draw(void)
       fill_uniform_buffer(d->m_uniform_values_ptr);
       if(d->m_params.separate_program_for_discard())
         {
-          prs[program_without_discard]->use_program();
-          Uniform(d->m_shader_uniforms_loc[program_without_discard], ubo_size(), d->m_uniform_values_ptr.reinterpret_pointer<float>());
+          if (d->m_shader_uniforms_loc[program_without_discard] != -1)
+            {
+              prs[program_without_discard]->use_program();
+              Uniform(d->m_shader_uniforms_loc[program_without_discard], ubo_size(), d->m_uniform_values_ptr.reinterpret_pointer<float>());
+            }
 
-          prs[program_with_discard]->use_program();
-          Uniform(d->m_shader_uniforms_loc[program_with_discard], ubo_size(), d->m_uniform_values_ptr.reinterpret_pointer<float>());
+          if (d->m_shader_uniforms_loc[program_with_discard] != -1)
+            {
+              prs[program_with_discard]->use_program();
+              Uniform(d->m_shader_uniforms_loc[program_with_discard], ubo_size(), d->m_uniform_values_ptr.reinterpret_pointer<float>());
+            }
         }
-      else
+      else if(d->m_shader_uniforms_loc[program_all] != -1)
         {
           Uniform(d->m_shader_uniforms_loc[program_all], ubo_size(), d->m_uniform_values_ptr.reinterpret_pointer<float>());
         }

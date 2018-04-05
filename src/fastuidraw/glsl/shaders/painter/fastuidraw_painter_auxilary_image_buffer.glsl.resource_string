@@ -1,0 +1,56 @@
+#ifdef FASTUIDRAW_PAINTER_HAVE_AUXILARY_BUFFER
+layout(binding = FASTUIDRAW_PAINTER_AUXILARY_BUFFER_BINDING, r8ui) restrict uniform uimage2D fastuidraw_auxilary_buffer;
+
+#ifdef FASTUIDRAW_PAINTER_INTERLOCK
+
+uint fastuidraw_clear_auxilary(void)
+{
+  uint r;
+  ivec2 pos = ivec2(gl_FragCoord.xy);
+
+  FASTUIDRAW_PAINTER_INTERLOCK();
+  r = imageLoad(fastuidraw_auxilary_buffer, pos).x;
+  imageStore(fastuidraw_auxilary_buffer, pos, uvec4(0u, 0u, 0u, 0u));
+  return r;
+}
+
+void fastuidraw_max_auxilary(in uint r)
+{
+  ivec2 pos = ivec2(gl_FragCoord.xy);
+  FASTUIDRAW_PAINTER_INTERLOCK();
+  r = min(r, 255u);
+  r = max(imageLoad(fastuidraw_auxilary_buffer, pos).x, r);
+  imageStore(fastuidraw_auxilary_buffer, pos, uvec4(r, 0u, 0u, 0u));
+}
+
+#else
+
+uint fastuidraw_clear_auxilary(void)
+{
+  uint r;
+  ivec2 pos = ivec2(gl_FragCoord.xy);
+
+  r = imageAtomicExchange(fastuidraw_auxilary_buffer, pos, 0u);
+  return r;
+}
+
+void fastuidraw_max_auxilary(in uint r)
+{
+  ivec2 pos = ivec2(gl_FragCoord.xy);
+  imageAtomicMax(fastuidraw_auxilary_buffer, pos, r);
+}
+
+#endif
+
+#else
+
+uint fastuidraw_clear_auxilary(void)
+{
+  return 0u;
+}
+
+void fastuidraw_max_auxilary(in uint r)
+{
+}
+
+#endif
