@@ -1,7 +1,8 @@
 #ifdef FASTUIDRAW_PAINTER_HAVE_AUXILARY_BUFFER
-layout(binding = FASTUIDRAW_PAINTER_AUXILARY_BUFFER_BINDING, r8ui) restrict uniform uimage2D fastuidraw_auxilary_buffer;
 
 #ifdef FASTUIDRAW_PAINTER_INTERLOCK
+
+layout(binding = FASTUIDRAW_PAINTER_AUXILARY_BUFFER_BINDING, r8ui) restrict uniform uimage2D fastuidraw_auxilary_buffer;
 
 uint fastuidraw_clear_auxilary(void)
 {
@@ -26,6 +27,8 @@ void fastuidraw_max_auxilary(in uint r)
 }
 
 #else
+
+layout(binding = FASTUIDRAW_PAINTER_AUXILARY_BUFFER_BINDING, r32ui) restrict uniform uimage2D fastuidraw_auxilary_buffer;
 
 uint fastuidraw_clear_auxilary(void)
 {

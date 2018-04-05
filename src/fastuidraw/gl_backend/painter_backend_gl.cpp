@@ -1745,20 +1745,23 @@ on_pre_draw(void)
           d->m_auxilary_buffer = 0;
         }
 
+      GLenum internalFmt(d->m_interlock_type == no_interlock ? GL_R32UI : GL_R8UI);
       if(d->m_auxilary_buffer == 0)
         {
           d->m_auxilary_resolution = d->m_target_resolution;
 
           vecN<GLsizei, 2> sz(d->m_auxilary_resolution.x(), d->m_auxilary_resolution.y());
           vecN<GLint, 2> origin(0, 0);
-          std::vector<uint8_t> bytes(sz.x() * sz.y(), 0);
+          unsigned int bytes_per_pixel(d->m_interlock_type == no_interlock ? 4 : 1);
+          std::vector<uint8_t> bytes(sz.x() * sz.y() * bytes_per_pixel, 0);
+          GLenum bytesType(d->m_interlock_type == no_interlock ? GL_UNSIGNED_INT : GL_UNSIGNED_BYTE);
 
           glGenTextures(1, &d->m_auxilary_buffer);
           glActiveTexture(GL_TEXTURE0);
           glBindTexture(GL_TEXTURE_2D, d->m_auxilary_buffer);
 
-          detail::tex_storage(true, GL_TEXTURE_2D, GL_R8UI, sz);
-          detail::tex_sub_image(GL_TEXTURE_2D, origin, sz, GL_RED_INTEGER, GL_UNSIGNED_BYTE, &bytes[0]);
+          detail::tex_storage(true, GL_TEXTURE_2D, internalFmt, sz);
+          detail::tex_sub_image(GL_TEXTURE_2D, origin, sz, GL_RED_INTEGER, bytesType, &bytes[0]);
           glBindTexture(GL_TEXTURE_2D, 0);
         }
       glBindImageTexture(binding_points.auxilary_image_buffer(),
@@ -1767,7 +1770,7 @@ on_pre_draw(void)
                          GL_FALSE, //layered
                          0, //layer
                          GL_READ_WRITE, //access
-                         GL_R8UI);
+                         internalFmt);
     }
 
   /* all of our texture units, oh my. */
