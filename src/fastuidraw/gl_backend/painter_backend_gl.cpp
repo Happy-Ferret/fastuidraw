@@ -1328,13 +1328,15 @@ configure_source_front_matter(void)
         case arb_fragment_shader_interlock:
           interlock << "void fastuidraw_begin_interlock(void) { beginInvocationInterlockARB(); }\n"
                     << "void fastuidraw_end_interlock(void) { endInvocationInterlockARB(); }\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n";
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n"
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY\n";
           break;
 
         case nv_fragment_shader_interlock:
           interlock << "void fastuidraw_begin_interlock(void) { beginInvocationInterlockNV(); }\n"
                     << "void fastuidraw_end_interlock(void) { endInvocationInterlockNV(); }\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n";
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n"
+                    << "#define FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY\n";
           break;
         }
 
