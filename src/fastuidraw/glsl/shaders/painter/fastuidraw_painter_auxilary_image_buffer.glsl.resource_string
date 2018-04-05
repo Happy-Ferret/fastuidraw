@@ -6,10 +6,10 @@
 
     #if !defined(FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY)
       #define FASTUIDRAW_BEGIN_AUX_LOCK fastuidraw_begin_interlock()
-      #define FASTUIDRAW_END_AUX_LOCK fastuidraw_end_interlock()
+      #define FASTUIDRAW_END_AUX_LOCK   fastuidraw_end_interlock()
     #else
-      #define FASTUIDRAW_BEGIN_AUX_LOCK
-      #define FASTUIDRAW_END_AUX_LOCK
+      #define FASTUIDRAW_BEGIN_AUX_LOCK fastuidraw_do_nothing()
+      #define FASTUIDRAW_END_AUX_LOCK   fastuidraw_do_nothing()
     #endif
 
     uint fastuidraw_clear_auxilary(void)
@@ -35,16 +35,15 @@
       FASTUIDRAW_END_AUX_LOCK;
     }
 
+    //now define interlock functions opposite for the main.
     #undef FASTUIDRAW_BEGIN_AUX_LOCK
     #undef FASTUIDRAW_END_AUX_LOCK
-
-    /* now define them as the opposite for their use by the fragment shader main */
     #if defined(FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY)
       #define FASTUIDRAW_BEGIN_AUX_LOCK fastuidraw_begin_interlock()
-      #define FASTUIDRAW_END_AUX_LOCK fastuidraw_end_interlock()
+      #define FASTUIDRAW_END_AUX_LOCK   fastuidraw_end_interlock()
     #else
-      #define FASTUIDRAW_BEGIN_AUX_LOCK
-      #define FASTUIDRAW_END_AUX_LOCK
+      #define FASTUIDRAW_BEGIN_AUX_LOCK fastuidraw_do_nothing()
+      #define FASTUIDRAW_END_AUX_LOCK   fastuidraw_do_nothing()
     #endif
 
   #else

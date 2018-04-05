@@ -1312,35 +1312,36 @@ configure_source_front_matter(void)
 
   if(m_uber_shader_builder_params.provide_auxilary_image_buffer())
     {
-      std::ostringstream interlock;
-      interlock << "layout(early_fragment_tests) in;\n";
       switch(m_interlock_type)
         {
         case no_interlock:
           break;
 
         case intel_fragment_shader_ordering:
-          interlock << "void fastuidraw_begin_interlock(void) { beginFragmentShaderOrderingINTEL(); }\n"
-                    << "void fastuidraw_end_interlock(void) {}\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n";
+          m_front_matter_frag
+            .add_define("fastuidraw_begin_interlock", "beginFragmentShaderOrderingINTEL")
+            .add_define("fastuidraw_end_interlock", "fastuidraw_do_nothing")
+            .add_define("FASTUIDRAW_PAINTER_INTERLOCK");
           break;
 
         case arb_fragment_shader_interlock:
-          interlock << "void fastuidraw_begin_interlock(void) { beginInvocationInterlockARB(); }\n"
-                    << "void fastuidraw_end_interlock(void) { endInvocationInterlockARB(); }\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY\n";
+          m_front_matter_frag
+            .add_define("fastuidraw_begin_interlock", "beginInvocationInterlockARB")
+            .add_define("fastuidraw_end_interlock", "endInvocationInterlockARB")
+            .add_define("FASTUIDRAW_PAINTER_INTERLOCK")
+            .add_define("FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY");
           break;
 
         case nv_fragment_shader_interlock:
-          interlock << "void fastuidraw_begin_interlock(void) { beginInvocationInterlockNV(); }\n"
-                    << "void fastuidraw_end_interlock(void) { endInvocationInterlockNV(); }\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK\n"
-                    << "#define FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY\n";
+          m_front_matter_frag
+            .add_define("fastuidraw_begin_interlock", "beginInvocationInterlockNV")
+            .add_define("fastuidraw_end_interlock", "endInvocationInterlockNV")
+            .add_define("FASTUIDRAW_PAINTER_INTERLOCK")
+            .add_define("FASTUIDRAW_PAINTER_INTERLOCK_MAIN_ONLY");
           break;
         }
 
-      m_front_matter_frag.add_source(interlock.str().c_str(), ShaderSource::from_string);
+      m_front_matter_frag.add_source("layout(early_fragment_tests) in;\n", ShaderSource::from_string);
     }
 
   #ifdef FASTUIDRAW_GL_USE_GLES
